@@ -1,0 +1,64 @@
+
+
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class BlockingQueue<E> {
+private Object[] arr;
+private int max_Size;
+private int index=0;
+private ReentrantLock lock=new ReentrantLock();
+private Condition fullArray=lock.newCondition();
+private Condition emptyArray=lock.newCondition();
+public BlockingQueue(int size)
+{
+	this.max_Size=size;
+	arr=new Object[max_Size];
+}
+
+public void put(E e){
+	lock.lock();
+	try{	
+		
+		while(index>=arr.length){
+				fullArray.await();
+		}
+		arr[index++]=e;
+		fullArray.signalAll();
+	}
+	catch (InterruptedException e1) {
+		e1.printStackTrace();
+	}
+	finally	{
+		lock.unlock();
+	}
+	}
+
+public E remove()
+{
+	lock.lock();
+	E data=null;
+	try {
+		while(arr.length==0)
+		{
+			emptyArray.await();
+		}
+		data=(E)arr[index];
+		arr[index]=null;
+		index--;
+		emptyArray.signalAll();
+		return data;
+		//return data;
+	}
+	catch (InterruptedException e) {
+		e.printStackTrace();
+	}
+	finally {
+		lock.unlock();
+		
+	}
+	return null;
+}
+}
+	
+
